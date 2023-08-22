@@ -3,9 +3,14 @@
 My own discord bot for applications. Not only staff, you can make anything! Every application and it's actions are editable using in-discord GUI! So no more annoying websites.
 
 ---
+
+[Support me on Ko-fi](https://ko-fi.com/anorak01)
+[Invite Applicator public instance to your server](https://discord.com/api/oauth2/authorize?client_id=1143622923136024767&permissions=0&scope=bot%20applications.commands)
+
+---
 ### Why?
 
-You know the feeling when you just want a simple application for your discord server and whatever you find has only website editor and features blocked under subscription? 
+You know the feeling when you just want a simple application for your discord server and whatever you find has only website editor and features blocked under subscription?
 
 Yeah... me too
 So I made this
@@ -36,7 +41,7 @@ So I made this
 The bot is based on `/slash` commands, so you can just type `/` in Discord and check out the commands
 
 - `/start_button` - creates a Start button for your application
-- `/application create [name]` - creates an application 
+- `/application create [name]` - creates an application
 - `/application remove [name]` - removes an application
 - `/application list` - lists all applications
 - `/application response_channel` - set channel where all finished applications get sent
