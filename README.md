@@ -5,6 +5,7 @@ My own discord bot for applications. Not only staff, you can make anything! Ever
 ---
 
 [Support me on Ko-fi](https://ko-fi.com/anorak01)
+
 [Invite Applicator public instance to your server](https://discord.com/api/oauth2/authorize?client_id=1143622923136024767&permissions=0&scope=bot%20applications.commands)
 
 ---
