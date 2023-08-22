@@ -163,3 +163,4 @@ cython_debug/
 applications.json
 applications.db
 old.py
+scheme.py
