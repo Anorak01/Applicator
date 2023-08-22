@@ -21,7 +21,7 @@ usable_actions = actions
 load_dotenv()
 
 TOKEN = os.getenv("TOKEN")
-bot = discord.Bot(intents=discord.Intents.all())
+bot = discord.Bot(intents=discord.Intents.default())
 
 
 @bot.event
