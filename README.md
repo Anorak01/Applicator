@@ -4,9 +4,9 @@ My own discord bot for applications. Not only staff, you can make anything! Ever
 
 ---
 
-Support me on <a href="https://ko-fi.com/anorak01" target="_blank">Ko-fi</a>
+Support me on [Ko-fi](https://ko-fi.com/anorak01)
 
-<a href="https://discord.com/api/oauth2/authorize?client_id=1143622923136024767&permissions=0&scope=bot%20applications.commands" target="_blank">Invite</a> Applicator public instance to your server
+[Invite](https://discord.com/api/oauth2/authorize?client_id=1143622923136024767&permissions=1119107533846&scope=bot%20applications.commands) Applicator public instance to your server
 
 ---
 ### Why?
@@ -53,7 +53,7 @@ The bot is based on `/slash` commands, so you can just type `/` in Discord and c
 ### Installation
 
 1. Clone repo `git clone https://github.com/Anorak01/Applicator`
-2. Rename `.env.example` to `.env` and paste in your bot token  <a href="https://docs.pycord.dev/en/stable/discord.html" target="_blank">How to get bot token</a>
+2. Rename `.env.example` to `.env` and paste in your bot token  [How to get bot token](https://docs.pycord.dev/en/stable/discord.html)
 3. Install dependencies `pip install -r requirements.txt`
 4. Initialize database `python3 setup.py`
 5. Start the bot `python3 bot.py`
