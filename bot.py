@@ -568,16 +568,6 @@ class ApplicationStartButtonView(discord.ui.View):
                 await user.send(content="As you haven't replied in 300 seconds, your application has been cancelled")
                 return
 
-        try:
-            with open('applications.json', 'r') as f:
-                data = json.load(f)
-        except (FileNotFoundError, json.JSONDecodeError):
-            data = []
-
-        data.append(application)
-        with open('applications.json', 'w') as f:
-            json.dump(data, f)
-
         channel = bot.get_channel(int(response_channel))
         embed = discord.Embed(title=f"Application: {app_name}\nUser: {interaction.user.display_name}")
         for i in range(0, max_questions):
