@@ -50,6 +50,26 @@ async def on_guild_remove(guild):
     await bot.change_presence(activity=activity, status = discord.Status.online)
     print(f"Removed from guild {guild.name}: {guild.id}")
 
+@bot.event
+async def on_application_command_error(ctx: discord.ApplicationContext, error: discord.DiscordException):
+    if isinstance(error, commands.MissingPermissions):
+        await ctx.respond("You need Administrator permissions to use this command", ephemeral=True)
+        print(f"{ctx.guild.name} {ctx.user.display_name} needs admin")
+    else:
+        raise error  # Here we raise other errors to ensure they aren't ignored
+
+@bot.slash_command(description = "A help command to get you started")
+async def help(ctx):
+    embed = discord.Embed(title="Applicator Help", description="Applicator is an open-source Discord application bot that's easy to setup directly in Discord. \nEvery command is usable with /slash. \nPlease note that you need Administrator privileges on the server to manipulate applications.")
+    embed.add_field(name=f"```/application create [name]```", value="Creates a new application", inline=False)
+    embed.add_field(name=f"```/application response_channel```", value="Sets the response channel for application. **Important**", inline=False)
+    embed.add_field(name=f"```/application remove [name]```", value="Removes specified application", inline=False)
+    embed.add_field(name=f"```/application list```", value="Lists all applications", inline=False)
+    embed.add_field(name=f"```/application editor```", value="Opens editor for application", inline=False)
+    embed.add_field(name=f"```/application actions```", value="Opens action editor for application", inline=False)
+    embed.add_field(name=f"```/start_button```", value="Creates start button for specified application", inline=False)
+    await ctx.response.send_message(embed=embed, ephemeral=True)
+
 @commands.has_permissions(administrator=True)
 @bot.slash_command(description = "Command used to set up the application prompt")
 async def start_button(ctx):
@@ -77,7 +97,7 @@ async def create(ctx, application):
         if result == "success":
             await ctx.response.send_message(f"Successfully created application: {application}\n\nDon't forget to set the response channel!", ephemeral=True) # create a new application, modal with name ask
     else:
-        await ctx.response.send_message(f"please choose shorter name", ephemeral=True)
+        await ctx.response.send_message(f"please choose a different name", ephemeral=True)
 
 @commands.has_permissions(administrator=True)
 @application.command(description="Remove application")
