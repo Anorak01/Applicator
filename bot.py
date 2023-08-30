@@ -56,7 +56,7 @@ async def on_application_command_error(ctx: discord.ApplicationContext, error: d
         await ctx.respond("You need Administrator permissions to use this command", ephemeral=True)
         print(f"{ctx.guild.name} {ctx.user.display_name} needs admin")
     else:
-        raise error  # Here we raise other errors to ensure they aren't ignored
+        raise error  # Error go brrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrr
 
 @bot.slash_command(description = "A help command to get you started")
 async def help(ctx):
@@ -238,6 +238,9 @@ class ApplicationEditorView(discord.ui.View):
         options = RemoveQuestionSelect(max_values=1, placeholder="Select question to remove")
         options.set_app_name(self.application_name)
         questions, length = GuildAppDB.get_questions(str(interaction.guild.id), self.application_name)
+        if length == 0:
+            await interaction.response.edit_message(view=view)
+            return
         for i, que in enumerate(questions):
             options.add_option(label=f"{str(i+1)}. {que}", value=str(i))
         view.add_item(options)
@@ -254,6 +257,9 @@ class ApplicationEditorView(discord.ui.View):
         options = EditQuestionSelect(max_values=1, placeholder="Select question to edit")
         options.set_app_name(self.application_name)
         questions, length = GuildAppDB.get_questions(str(interaction.guild.id), self.application_name)
+        if length == 0:
+            await interaction.response.edit_message(view=view)
+            return
         for i, que in enumerate(questions):
             options.add_option(label=f"{str(i+1)}. {que}", value=str(i))
         view.add_item(options)
@@ -270,6 +276,9 @@ class ApplicationEditorView(discord.ui.View):
         options = MoveQuestionSelect(max_values=1, placeholder="Select question to move")
         options.set_app_name(self.application_name)
         questions, length = GuildAppDB.get_questions(str(interaction.guild.id), self.application_name)
+        if length == 0:
+            await interaction.response.edit_message(view=view)
+            return
         for i, que in enumerate(questions):
             options.add_option(label=f"{str(i+1)}. {que}", value=str(i))
         view.add_item(options)
