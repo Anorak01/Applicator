@@ -411,6 +411,9 @@ class ActionAcceptEditorView(discord.ui.View):
         options.set_app_name(self.application_name)
         actions = GuildAppDB.get_actions(str(interaction.guild.id), self.application_name, action_type=ActionInteraction.ACCEPT)
         options.set_action_type(ActionInteraction.ACCEPT)
+        if len(actions) == 0:
+            await interaction.response.edit_message(view=view)
+            return
         for i, que in enumerate(actions):
             if que["action_type"] == "add_role":
                 role = interaction.guild.get_role(que["data"]["role_id"]).name
@@ -454,6 +457,9 @@ class ActionDeclineEditorView(discord.ui.View):
         options.set_app_name(self.application_name)
         actions = GuildAppDB.get_actions(str(interaction.guild.id), self.application_name, action_type=ActionInteraction.DECLINE)
         options.set_action_type(ActionInteraction.DECLINE)
+        if len(actions) == 0:
+            await interaction.response.edit_message(view=view)
+            return
         for i, que in enumerate(actions):
             if que["action_type"] == "add_role":
                 role = interaction.guild.get_role(que["data"]["role_id"]).name
