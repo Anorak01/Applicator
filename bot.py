@@ -681,11 +681,13 @@ class ApplicationModal(discord.ui.Modal):
         if self.action == "acc":
             user = await bot.get_or_fetch_user(user_id)
             user = await user.create_dm()
-            await user.send(f"Your application has been accepted!")
+            try:
+                await user.send(f"Your application has been accepted!")
+            except discord.errors.Forbidden as e:
+                await interaction.response.send_message(content="Cannot send messages to this user.\nHe is likely no longer on this server.", ephemeral=True)
+                return
             await user.send(f"Reason: {reason}")
             await interaction.response.send_message(content="Application accepted", ephemeral=True)
-
-            role = get(interaction.message.guild.roles, name="CreatTopian")
 
             actions = GuildAppDB.get_actions(str(guild_id), app_name, ActionInteraction.ACCEPT)
             for i in actions:
@@ -713,7 +715,11 @@ class ApplicationModal(discord.ui.Modal):
         if self.action == "dec":
             user = await bot.get_or_fetch_user(user_id)
             user = await user.create_dm()
-            await user.send(f"Your application has been declined.")
+            try:
+                await user.send(f"Your application has been declined.")
+            except discord.errors.Forbidden as e:
+                await interaction.response.send_message(content="Cannot send messages to this user.\nHe is likely no longer on this server.", ephemeral=True)
+                return
             await user.send(f"Reason: {reason}")
             await interaction.response.send_message(content="Application declined", ephemeral=True)
 
