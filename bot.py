@@ -583,6 +583,9 @@ class ApplicationStartButtonView(discord.ui.View):
         if questions == "error on get questions: application not found":
             await interaction.response.send_message(content="Application no longer exists", ephemeral=True)
             return
+        if max_questions == 0:
+            await interaction.response.send_message(content="Application doesn't have any questions", ephemeral=True)
+            return
         response_channel = GuildAppDB.get_response_channel(guild_id, app_name)
 
         user = await interaction.user.create_dm()
@@ -643,8 +646,8 @@ class ApplicationButtonsView(discord.ui.View):
         msg_id = str(interaction.message.id)
 
         user_id, guild_id, app_name = MessageDB.get_application_msg(msg_id)
-
-        modal = ApplicationModal(title=f"Accepting: {bot.get_user(user_id).display_name}")
+        user = await bot.get_or_fetch_user(user_id)
+        modal = ApplicationModal(title=f"Accepting: {user.display_name}")
         modal.set_action("acc")
         modal.add_item(discord.ui.InputText(label=f"Reason: "))
         await interaction.response.send_modal(modal)
@@ -659,7 +662,8 @@ class ApplicationButtonsView(discord.ui.View):
 
         user_id, guild_id, app_name = MessageDB.get_application_msg(msg_id)
 
-        modal = ApplicationModal(title=f"Declining: {bot.get_user(user_id).display_name}")
+        user = await bot.get_or_fetch_user(user_id)
+        modal = ApplicationModal(title=f"Declining: {user.display_name}")
         modal.set_action("dec")
         modal.add_item(discord.ui.InputText(label=f"Reason: "))
         await interaction.response.send_modal(modal)
@@ -675,7 +679,8 @@ class ApplicationModal(discord.ui.Modal):
         msg_id = str(interaction.message.id)
         user_id, guild_id, app_name = MessageDB.get_application_msg(msg_id)
         if self.action == "acc":
-            user = await bot.get_user(user_id).create_dm()
+            user = await bot.get_or_fetch_user(user_id)
+            user = await user.create_dm()
             await user.send(f"Your application has been accepted!")
             await user.send(f"Reason: {reason}")
             await interaction.response.send_message(content="Application accepted", ephemeral=True)
@@ -706,7 +711,8 @@ class ApplicationModal(discord.ui.Modal):
 
 
         if self.action == "dec":
-            user = await bot.get_user(user_id).create_dm()
+            user = await bot.get_or_fetch_user(user_id)
+            user = await user.create_dm()
             await user.send(f"Your application has been declined.")
             await user.send(f"Reason: {reason}")
             await interaction.response.send_message(content="Application declined", ephemeral=True)
