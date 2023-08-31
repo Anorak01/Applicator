@@ -28,10 +28,8 @@ So I made this
 
 ### Plans
 
-- Help command to start you up
 - Rework the code and redesign Actions™ backend
 - Better permission management - application operations requires Administrator permissions for now
-- QoL features - streamlining application creation process
 - More ways to go through the application process - modals, interview channel
 - Add new Actions™ - remove role, send message to channel, etc. - ideas welcome
 
