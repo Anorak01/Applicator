@@ -75,7 +75,11 @@ async def help(ctx):
 async def start_button(ctx):
     view = discord.ui.View()
     options = SelectApplicationStartButton(max_values=1, placeholder="Select application")
-    for i in GuildAppDB.get_applications(str(ctx.guild.id)):
+    applications = GuildAppDB.get_applications(str(ctx.guild.id))
+    if len(applications) == 0:
+        await ctx.response.send_message(content="There are no applications setup for the server. \nPlease create an application first.", ephemeral=True)
+        return
+    for i in applications:
         options.add_option(label=i, value=i)
     view.add_item(options)
     await ctx.response.send_message(view=view, ephemeral=True)
@@ -95,7 +99,11 @@ async def create(ctx, application):
     if len(application) < 40:
         result = GuildAppDB.add_application_entry(str(ctx.guild.id), application)
         if result == "success":
-            await ctx.response.send_message(f"Successfully created application: {application}\n\nDon't forget to set the response channel!", ephemeral=True) # create a new application, modal with name ask
+            view = discord.ui.View()
+            options = SelectResponseChannel(select_type=discord.ComponentType.channel_select, channel_types=[discord.ChannelType.text], max_values=1, placeholder="Select channel")
+            options.set_app_name(application)
+            view.add_item(options)
+            await ctx.response.send_message(f"Successfully created application: {application}\n\nPlease set a response channel:", ephemeral=True, view=view) # create a new application, modal with name ask
     else:
         await ctx.response.send_message(f"please choose a different name", ephemeral=True)
 
@@ -114,8 +122,11 @@ async def list(ctx):
     applications = GuildAppDB.get_applications(str(ctx.guild.id))
     embed = discord.Embed(title="**List of applications**")
     embed.set_footer(text="Made by @anorak01", icon_url="https://cdn.discordapp.com/avatars/269164865480949760/a1af9962da20d5ddaa136043cf45d015?size=1024")
-    for i, app in enumerate(applications):
-        embed.add_field(value=f"**{i+1}. {app}**", name="", inline=False)
+    if len(applications) == 0:
+        embed.title="You haven't created any applications yet."
+    else:
+        for i, app in enumerate(applications):
+            embed.add_field(value=f"**{i+1}. {app}**", name="", inline=False)
     await ctx.response.send_message(embed=embed, ephemeral=True)
 
 @commands.has_permissions(administrator=True)
