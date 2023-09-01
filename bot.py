@@ -180,8 +180,12 @@ class SelectApplicationStartButton(discord.ui.Select):
         embed.set_footer(text="Made by @anorak01", icon_url="https://cdn.discordapp.com/avatars/269164865480949760/a1af9962da20d5ddaa136043cf45d015?size=1024")
         appStartView = ApplicationStartButtonView()
 
+        try:
+            message = await interaction.channel.send(embed = embed, view=appStartView)
+        except discord.errors.Forbidden:
+            await interaction.response.edit_message(content="Missing access to send message", view=None)
+            return
         await interaction.response.edit_message(embed=None, content="Application button created", view=None)
-        message = await interaction.channel.send(embed = embed, view=appStartView)
         StartButtonDB.add_start_msg(str(message.id), str(self.values[0]), str(interaction.guild.id))
 
 
