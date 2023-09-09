@@ -21,6 +21,8 @@ usable_actions = actions
 load_dotenv()
 
 TOKEN = os.getenv("TOKEN")
+INVITE_LINK = os.getenv("INVITE_LINK")
+SUPPORT_LINK = os.getenv("SUPPORT_LINK")
 bot = discord.Bot(intents=discord.Intents.default())
 
 
@@ -90,6 +92,33 @@ async def on_application_command_error(ctx, error):
         await ctx.respond("You need Administrator permissions to use this command", ephemeral=True)
     else:
         raise error
+
+
+@bot.command(description="Posts invite button for the bot")
+async def invite(ctx):
+    view = discord.ui.View()
+    invite_button = discord.ui.Button(label="Invite", style=discord.ButtonStyle.link, url=INVITE_LINK)
+    view.add_item(invite_button)
+    embed = discord.Embed(title="Invite Me", color=0x70ff50, description="If you like the bot and want to invite it to other servers, click the button below")
+    embed.set_footer(text="Made by @anorak01", icon_url="https://cdn.discordapp.com/avatars/269164865480949760/a1af9962da20d5ddaa136043cf45d015?size=1024")
+    try:
+        await ctx.response.send_message(embed=embed, view=view)
+    except discord.HTTPException as e:
+        await ctx.response.send_message(content="It looks like the bot owner didn't set up this link correctly")
+        raise e
+
+@bot.command(description="Posts support button for the bot")
+async def support(ctx):
+    view = discord.ui.View()
+    invite_button = discord.ui.Button(label="Support server", style=discord.ButtonStyle.link, url=SUPPORT_LINK)
+    view.add_item(invite_button)
+    embed = discord.Embed(title="Support", color=0x70ff50, description="If you're having issues with the bot, you can join my support server with the button below")
+    embed.set_footer(text="Made by @anorak01", icon_url="https://cdn.discordapp.com/avatars/269164865480949760/a1af9962da20d5ddaa136043cf45d015?size=1024")
+    try:
+        await ctx.response.send_message(embed=embed, view=view)
+    except discord.HTTPException as e:
+        await ctx.response.send_message(content="It looks like the bot owner didn't set up this link correctly")
+        raise e
 
 application = discord.SlashCommandGroup("application", "The main command to manage applications")
 
