@@ -120,6 +120,15 @@ async def support(ctx):
         await ctx.response.send_message(content="It looks like the bot owner didn't set up this link correctly")
         raise e
 
+@bot.command(description="Leave a review", id="review", name="review")
+async def review(ctx):
+    view = discord.ui.View()
+    invite_button = discord.ui.Button(label="Review", style=discord.ButtonStyle.link, url="https://top.gg/bot/1143622923136024767#reviews")
+    view.add_item(invite_button)
+    embed = discord.Embed(title="Review", color=0x70ff50, description="If you like the bot, please consider leaving a review and upvote my bot, it will really help a lot!")
+    embed.set_footer(text="Made by @anorak01", icon_url="https://cdn.discordapp.com/avatars/269164865480949760/a1af9962da20d5ddaa136043cf45d015?size=1024")
+    await ctx.response.send_message(embed=embed, view=view)
+
 application = discord.SlashCommandGroup("application", "The main command to manage applications")
 
 @commands.has_permissions(administrator=True)
