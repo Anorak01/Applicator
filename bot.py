@@ -5,6 +5,8 @@ import discord
 import os
 import json
 import pickle
+import time
+import datetime
 from dotenv import load_dotenv
 from discord.ui import Modal, InputText
 from discord.utils import get
@@ -643,6 +645,8 @@ class ApplicationStartButtonView(discord.ui.View):
 
         await interaction.response.send_message(content="Application started", ephemeral=True)
 
+        time_now = time.time()
+
         application = {'userId': interaction.user.id}
 
         for i in range(0, max_questions):
@@ -660,10 +664,24 @@ class ApplicationStartButtonView(discord.ui.View):
                 return
 
         channel = bot.get_channel(int(response_channel))
-        embed = discord.Embed(title=f"Application: {app_name}\nUser: {interaction.user.display_name}")
+
+        app_time = time.time() - time_now
+        time_rounded = round(app_time, 2)
+
+        embed = discord.Embed(title=f"**{interaction.user.display_name}**'s application for {app_name}") #User:` {interaction.user.display_name}\n`User Mention:` {interaction.user.mention}")
         for i in range(0, max_questions):
             embed.add_field(name=f'{questions[i]}', value=application[f'question{i}'], inline=False)
-        embed.set_footer(text=f"Applicant ID: {interaction.user.id}")
+
+        embed.add_field(name="Application statistics", value=f"""
+                        `Application duration:` **{time_rounded} seconds**
+                        `User mention:` {interaction.user.mention}
+                        `User ID:` **{interaction.user.id}**
+                        `Account age:` <t:{round(interaction.user.created_at.timestamp())}:R>
+                        """)
+
+        embed.set_thumbnail(url=interaction.user.display_avatar.url)
+        embed.set_footer(text="Made by @anorak01", icon_url="https://cdn.discordapp.com/avatars/269164865480949760/a1af9962da20d5ddaa136043cf45d015?size=1024")
+
 
         appView = ApplicationButtonsView()
 
@@ -740,13 +758,10 @@ class ApplicationModal(discord.ui.Modal):
                 else:
                     print("unknown action")
 
-
-
-            #await discord.utils.get(interaction.message.guild.members, id=int(user_id)).add_roles(role)
             emb = interaction.message.embeds[0]
             emb.colour = discord.Colour.green()
             embed = discord.Embed(title='Accepted')
-            embed.add_field(name=f'Reason:', value=reason, inline=False)
+            embed.add_field(name="", value=f"`Reason:` {reason}\n`By:` {interaction.user.mention}\n`Time:` <t:{round(time.time())}:f>")
             embed.colour = discord.Colour.green()
             await interaction.followup.edit_message(message_id = interaction.message.id, embeds=[emb, embed])
             view = discord.ui.View.from_message(interaction.message)
@@ -778,7 +793,7 @@ class ApplicationModal(discord.ui.Modal):
             emb = interaction.message.embeds[0]
             emb.colour = discord.Colour.red()
             embed = discord.Embed(title='Declined')
-            embed.add_field(name=f'Reason:', value=reason, inline=False)
+            embed.add_field(name="", value=f"`Reason:` {reason}\n`By:` {interaction.user.mention}\n`Time:` <t:{round(time.time())}:f>")
             embed.colour = discord.Colour.red()
             await interaction.followup.edit_message(message_id = interaction.message.id, embeds=[emb, embed])
             view = discord.ui.View.from_message(interaction.message)
