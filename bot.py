@@ -753,7 +753,10 @@ class ApplicationModal(discord.ui.Modal):
             for i in actions:
                 if i["action_type"] == "add_role":
                     role = interaction.message.guild.get_role(int(i["data"]["role_id"]))
-                    user = interaction.message.guild.get_member(int(user_id))
+                    try:
+                        user = await interaction.message.guild.fetch_member(int(user_id))
+                    except:
+                        print("Can't process action, user not found")
                     await user.add_roles(role)
                 else:
                     print("unknown action")
