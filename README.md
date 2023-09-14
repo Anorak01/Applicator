@@ -56,3 +56,10 @@ The bot is based on `/slash` commands, so you can just type `/` in Discord and c
 4. Initialize database `python3 setup.py`
 5. Start the bot `python3 bot.py`
 6. Enjoy!
+
+---
+
+### Author notes
+
+Yes it's messy, yes I'm working on it.
+No, I don't care about pushing to main on a single person project.
