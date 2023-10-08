@@ -164,3 +164,5 @@ applications.json
 applications.db
 old.py
 scheme.py
+components/
+modals/
