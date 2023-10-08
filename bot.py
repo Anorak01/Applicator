@@ -757,7 +757,10 @@ class ApplicationModal(discord.ui.Modal):
                         user = await interaction.message.guild.fetch_member(int(user_id))
                     except:
                         print("Can't process action, user not found")
-                    await user.add_roles(role)
+                    try:
+                        await user.add_roles(role)
+                    except Exception as e:
+                        await interaction.followup.send(content=f"I was unable to add role `{role.name}`, I'm missing the permissions")
                 else:
                     print("unknown action")
 
