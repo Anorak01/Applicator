@@ -34,12 +34,19 @@ async def on_ready():
     bot.add_view(ApplicationStartButtonView())
     activity = discord.Activity(name=f"{len(bot.guilds)} guilds", type=discord.ActivityType.listening)
     await bot.change_presence(activity=activity, status = discord.Status.online)
-    print(f"Logged in as {bot.user}")
-    await bot.sync_commands(force=True)
+
+    print("Started guild sync")
+    new_guild_count = 0
     for i in bot.guilds:
         if str(i.id) not in GuildAppDB.get_all_guilds():
             GuildAppDB.create_guild(str(i.id), i.name)
+            new_guild_count+=1
             print(f"Entry for {i.id} created")
+
+    print(f"Logged in as {bot.user}")
+    
+    await bot.sync_commands(force=True)
+    print("Command sync finished")
 
 @bot.event
 async def on_guild_join(guild):
@@ -297,7 +304,10 @@ class ApplicationEditorView(discord.ui.View):
             await interaction.response.edit_message(view=view)
             return
         for i, que in enumerate(questions):
-            options.add_option(label=f"{str(i+1)}. {que}", value=str(i))
+            if len(que) > 100:
+                options.add_option(label=f"{str(i+1)}. {que[0:90]}..", value=str(i))
+            else:
+                options.add_option(label=f"{str(i+1)}. {que}", value=str(i))
         view.add_item(options)
         await interaction.response.edit_message(view=view)
 
@@ -316,7 +326,10 @@ class ApplicationEditorView(discord.ui.View):
             await interaction.response.edit_message(view=view)
             return
         for i, que in enumerate(questions):
-            options.add_option(label=f"{str(i+1)}. {que}", value=str(i))
+            if len(que) > 100:
+                options.add_option(label=f"{str(i+1)}. {que[0:90]}..", value=str(i))
+            else:
+                options.add_option(label=f"{str(i+1)}. {que}", value=str(i))
         view.add_item(options)
         await interaction.response.edit_message(view=view)
 
@@ -335,7 +348,10 @@ class ApplicationEditorView(discord.ui.View):
             await interaction.response.edit_message(view=view)
             return
         for i, que in enumerate(questions):
-            options.add_option(label=f"{str(i+1)}. {que}", value=str(i))
+            if len(que) > 100:
+                options.add_option(label=f"{str(i+1)}. {que[0:90]}..", value=str(i))
+            else:
+                options.add_option(label=f"{str(i+1)}. {que}", value=str(i))
         view.add_item(options)
         await interaction.response.edit_message(view=view)
 
@@ -347,6 +363,9 @@ class AddQuestionModal(discord.ui.Modal):
 
     async def callback(self, interaction: discord.Interaction):
         question = self.children[0].value
+        if len(question) > 250:
+            await interaction.response.send_message(f"Question too long, max 100 characters", ephemeral=True)
+            return
         GuildAppDB.add_question(str(interaction.guild.id), self.app_name, question)
         embed = get_questions_embed(str(interaction.guild.id), self.app_name)
         await interaction.response.edit_message(embed=embed)
@@ -634,16 +653,17 @@ class ApplicationStartButtonView(discord.ui.View):
 
         user = await interaction.user.create_dm()
         embedd = discord.Embed(title=f'{interaction.guild.name} application: {app_name}', description="Hey! Your application has started. You have 300 seconds to complete it.")
+        embedd.add_field(value="Please note that answers longer than 1000 characters will be shortened", name="", inline=False)
         embedd.add_field(value=f'You can cancel the application by answering "cancel" to any of the questions', name="", inline=False)
         embedd.set_footer(text="Made by @anorak01", icon_url="https://cdn.discordapp.com/avatars/269164865480949760/a1af9962da20d5ddaa136043cf45d015?size=1024")
-
+        
         try:
-            await user.send(embed=embedd)
+            first_mes = await user.send(embed=embedd)
         except discord.Forbidden:
             await interaction.response.send_message(content="Can't start application. Please allow direct messages from server members in your privacy settings.", ephemeral=True)
             return
 
-        await interaction.response.send_message(content="Application started", ephemeral=True)
+        await interaction.response.send_message(content=f"Application started {user.jump_url}", ephemeral=True)
 
         time_now = time.time()
 
@@ -658,7 +678,7 @@ class ApplicationStartButtonView(discord.ui.View):
                     await user.send("Your application has been cancelled")
                     return
                 else:
-                    application[f'question{i}'] = response.content
+                    application[f'question{i}'] = response.content[0:1000]
             except asyncio.TimeoutError:
                 await user.send(content="As you haven't replied in 300 seconds, your application has been cancelled")
                 return
@@ -668,26 +688,53 @@ class ApplicationStartButtonView(discord.ui.View):
         app_time = time.time() - time_now
         time_rounded = round(app_time, 2)
 
-        embed = discord.Embed(title=f"**{interaction.user.display_name}**'s application for {app_name}") #User:` {interaction.user.display_name}\n`User Mention:` {interaction.user.mention}")
+        #embed_start = discord.Embed(title=f"**{interaction.user.display_name}**'s application for {app_name}") #User:` {interaction.user.display_name}\n`User Mention:` {interaction.user.mention}")
+        
+        text_representation = ""
+        send_as_file = False
+        
+        embed_text_len = 0 # limit 6k characters, but ideally less
+        question_embeds = []
+        embee = discord.Embed(title=f"**{interaction.user.display_name}**'s application for {app_name}") # create first embed
         for i in range(0, max_questions):
-            embed.add_field(name=f'{questions[i]}', value=application[f'question{i}'], inline=False)
+            if embed_text_len > 5000: # if the first embed is full, create new one
+                question_embeds.append(embee)
+                embee = discord.Embed()
+                embed_text_len = 0
+                send_as_file = True
 
-        embed.add_field(name="Application statistics", value=f"""
+            embee.add_field(name=f'{questions[i]}', value=application[f'question{i}'], inline=False)
+            embed_text_len += len(questions[i]) + len(application[f'question{i}'])
+            text_representation += questions[i] + ":\n" + application[f'question{i}'] + "\n\n"
+        question_embeds.append(embee)
+
+        embed_controls = discord.Embed()
+        embed_controls.add_field(name="Application statistics", value=f"""
                         `Application duration:` **{time_rounded} seconds**
                         `User mention:` {interaction.user.mention}
                         `User ID:` **{interaction.user.id}**
                         `Account age:` <t:{round(interaction.user.created_at.timestamp())}:R>
                         """)
 
-        embed.set_thumbnail(url=interaction.user.display_avatar.url)
-        embed.set_footer(text="Made by @anorak01", icon_url="https://cdn.discordapp.com/avatars/269164865480949760/a1af9962da20d5ddaa136043cf45d015?size=1024")
+        embed_controls.set_thumbnail(url=interaction.user.display_avatar.url)
+        embed_controls.set_footer(text="Made by @anorak01", icon_url="https://cdn.discordapp.com/avatars/269164865480949760/a1af9962da20d5ddaa136043cf45d015?size=1024")
 
+        question_embeds.append(embed_controls)
+        #for embe in question_embeds:
+        #    await channel.send(embed=embe)
 
         appView = ApplicationButtonsView()
 
-        msg = await channel.send(embed=embed, view=appView)
+        if send_as_file:
+            from io import StringIO
+            text_file = StringIO(text_representation)
+            text_file = discord.File(text_file, filename="application.txt")
+            last_msg = await channel.send(content="Application too long to send as message. Sent as file", view=appView, file=text_file, embed=embed_controls)
 
-        MessageDB.add_application_msg(msg.id, interaction.user.id, interaction.guild.id, app_name)
+        else:
+            last_msg = await channel.send(embeds=question_embeds, view=appView)
+
+        MessageDB.add_application_msg(last_msg.id, interaction.user.id, interaction.guild.id, app_name)
 
         await user.send('Thank you for applying!')
 
