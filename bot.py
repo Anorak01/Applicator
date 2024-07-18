@@ -44,7 +44,7 @@ async def on_ready():
             print(f"Entry for {i.id} created")
 
     print(f"Logged in as {bot.user}")
-    
+
     await bot.sync_commands(force=True)
     print("Command sync finished")
 
@@ -326,8 +326,8 @@ class ApplicationEditorView(discord.ui.View):
             await interaction.response.edit_message(view=view)
             return
         for i, que in enumerate(questions):
-            if len(que) > 100:
-                options.add_option(label=f"{str(i+1)}. {que[0:90]}..", value=str(i))
+            if len(que) > 90:
+                options.add_option(label=f"{str(i+1)}. {que[0:80]}..", value=str(i))
             else:
                 options.add_option(label=f"{str(i+1)}. {que}", value=str(i))
         view.add_item(options)
@@ -656,7 +656,7 @@ class ApplicationStartButtonView(discord.ui.View):
         embedd.add_field(value="Please note that answers longer than 1000 characters will be shortened", name="", inline=False)
         embedd.add_field(value=f'You can cancel the application by answering "cancel" to any of the questions', name="", inline=False)
         embedd.set_footer(text="Made by @anorak01", icon_url="https://cdn.discordapp.com/avatars/269164865480949760/a1af9962da20d5ddaa136043cf45d015?size=1024")
-        
+
         try:
             first_mes = await user.send(embed=embedd)
         except discord.Forbidden:
@@ -689,10 +689,10 @@ class ApplicationStartButtonView(discord.ui.View):
         time_rounded = round(app_time, 2)
 
         #embed_start = discord.Embed(title=f"**{interaction.user.display_name}**'s application for {app_name}") #User:` {interaction.user.display_name}\n`User Mention:` {interaction.user.mention}")
-        
+
         text_representation = ""
         send_as_file = False
-        
+
         embed_text_len = 0 # limit 6k characters, but ideally less
         question_embeds = []
         embee = discord.Embed(title=f"**{interaction.user.display_name}**'s application for {app_name}") # create first embed
