@@ -57,13 +57,47 @@ class StartButtonDB():
 
 class GuildAppDB():
     @classmethod
+    def set_editor_role(cls, guild_id: str, role_id: str) -> None:
+        con = sqlite3.connect("applications.db")
+        cur = con.cursor()
+        cur.execute("UPDATE app_guildapp_db SET editor_role_id = (?) WHERE guild_id= (?)", (role_id, guild_id))
+        con.commit()
+
+    @classmethod
+    def get_editor_role(cls, guild_id: str) -> int:
+        con = sqlite3.connect("applications.db")
+        cur = con.cursor()
+        cur.execute("SELECT editor_role_id FROM app_guildapp_db WHERE guild_id=(?)", (guild_id, ))
+        role_id = cur.fetchone()
+        if role_id == "" or role_id == None:
+            return -1 # no valid role to check
+        else: return role_id
+
+    @classmethod
+    def set_reviewer_role(cls, guild_id: str, role_id: str) -> None:
+        con = sqlite3.connect("applications.db")
+        cur = con.cursor()
+        cur.execute("UPDATE app_guildapp_db SET reviewer_role_id = (?) WHERE guild_id= (?)", (role_id, guild_id))
+        con.commit()
+
+    @classmethod
+    def get_reviewer_role(cls, guild_id: str) -> int:
+        con = sqlite3.connect("applications.db")
+        cur = con.cursor()
+        cur.execute("SELECT reviewer_role_id FROM app_guildapp_db WHERE guild_id=(?)", (guild_id, ))
+        role_id = cur.fetchone()
+        if role_id == "" or role_id == None:
+            return -1 # no valid role to check
+        else: return role_id
+
+    @classmethod
     def create_guild(cls, guild_id: str, guild_name: str) -> None:
         applications = {}
         application_blob = pickle.dumps(applications)
-        data = guild_id, guild_name, application_blob
+        data = guild_id, guild_name, application_blob, "", ""
         con = sqlite3.connect("applications.db")
         cur = con.cursor()
-        cur.execute("INSERT INTO app_guildapp_db VALUES (?, ?, ?)", data)
+        cur.execute("INSERT INTO app_guildapp_db VALUES (?, ?, ?, ?, ?)", data)
         con.commit()
 
     @classmethod
