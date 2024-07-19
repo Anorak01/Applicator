@@ -69,6 +69,26 @@ async def on_application_command_error(ctx: discord.ApplicationContext, error: d
     else:
         raise error  # Error go brrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrr
 
+def is_editor_or_admin():
+    async def predicate(ctx):
+        editor_role_id = GuildAppDB.get_editor_role(str(ctx.guild.id))
+        user_role = ctx.user.get_role(editor_role_id)
+        if ctx.user.guild_permissions.administrator: return True
+        elif user_role != None: return True
+        else: return False
+
+    return commands.check(predicate)
+
+def is_reviewer_or_admin():
+    async def predicate(ctx):
+        reviewer_role_id = GuildAppDB.get_reviewer_role(str(ctx.guild.id))
+        user_role = ctx.user.get_role(reviewer_role_id)
+        if ctx.user.guild_permissions.administrator: return True
+        elif user_role != None: return True
+        else: return False
+
+    return commands.check(predicate)
+
 @bot.slash_command(description = "A help command to get you started")
 async def help(ctx):
     embed = discord.Embed(title="Applicator Help", description="Applicator is an open-source Discord application bot that's easy to setup directly in Discord. \nEvery command is usable with /slash. \nPlease note that you need Administrator privileges on the server to manipulate applications.")
