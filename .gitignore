@@ -165,3 +165,4 @@ applications.db
 old.py
 scheme.py
 components/
+pyrightconfig.json
