@@ -71,7 +71,7 @@ class GuildAppDB():
         role_id = cur.fetchone()
         if role_id == "" or role_id == None:
             return -1 # no valid role to check
-        else: return role_id
+        else: return int(role_id[0])
 
     @classmethod
     def set_reviewer_role(cls, guild_id: str, role_id: str) -> None:
@@ -88,7 +88,7 @@ class GuildAppDB():
         role_id = cur.fetchone()
         if role_id == "" or role_id == None:
             return -1 # no valid role to check
-        else: return role_id
+        else: return int(role_id[0])
 
     @classmethod
     def create_guild(cls, guild_id: str, guild_name: str) -> None:
