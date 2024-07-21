@@ -94,6 +94,13 @@ def is_reviewer_or_admin():
 
     return commands.check(predicate)
 
+def is_reviewer_or_admin_func(ctx: discord.Interaction):
+    reviewer_role_id = GuildAppDB.get_reviewer_role(str(ctx.guild.id))
+    user_role = ctx.user.get_role(reviewer_role_id)
+    if ctx.user.guild_permissions.administrator: return True
+    elif user_role != None: return True
+    else: return False
+
 @bot.slash_command(description = "A help command to get you started")
 async def help(ctx):
     embed = discord.Embed(title="Applicator Help", description="Applicator is an open-source Discord application bot that's easy to setup directly in Discord. \nEvery command is usable with /slash. \nPlease note that you need Administrator privileges on the server to manipulate applications.")
@@ -106,7 +113,6 @@ async def help(ctx):
     embed.add_field(name=f"```/start_button```", value="Creates start button for specified application", inline=False)
     await ctx.response.send_message(embed=embed, ephemeral=True)
 
-@commands.has_permissions(administrator=True)
 @bot.slash_command(description = "Command used to set up the application prompt")
 @is_editor_or_admin()
 async def start_button(ctx):
@@ -811,14 +817,17 @@ class ApplicationButtonsView(discord.ui.View):
         custom_id=f"persistent:accept",
     )
     async def accept(self, button: discord.ui.Button, interaction: discord.Interaction):
-        msg_id = str(interaction.message.id)
+        if is_reviewer_or_admin_func(interaction):
+            msg_id = str(interaction.message.id)
 
-        user_id, guild_id, app_name = MessageDB.get_application_msg(msg_id)
-        user = await bot.get_or_fetch_user(user_id)
-        modal = ApplicationModal(title=f"Accepting: {user.display_name}")
-        modal.set_action("acc")
-        modal.add_item(discord.ui.InputText(label=f"Reason: "))
-        await interaction.response.send_modal(modal)
+            user_id, guild_id, app_name = MessageDB.get_application_msg(msg_id)
+            user = await bot.get_or_fetch_user(user_id)
+            modal = ApplicationModal(title=f"Accepting: {user.display_name}")
+            modal.set_action("acc")
+            modal.add_item(discord.ui.InputText(label=f"Reason: "))
+            await interaction.response.send_modal(modal)
+        else:
+            await interaction.response.send_message("You need Administrator permissions or reviewer role to do this.", ephemeral=True)
 
     @discord.ui.button(
         label="Decline",
@@ -826,15 +835,18 @@ class ApplicationButtonsView(discord.ui.View):
         custom_id=f"persistent:decline",
     )
     async def decline(self, button: discord.ui.Button, interaction: discord.Interaction):
-        msg_id = str(interaction.message.id)
+        if is_reviewer_or_admin_func(interaction):
+            msg_id = str(interaction.message.id)
 
-        user_id, guild_id, app_name = MessageDB.get_application_msg(msg_id)
+            user_id, guild_id, app_name = MessageDB.get_application_msg(msg_id)
 
-        user = await bot.get_or_fetch_user(user_id)
-        modal = ApplicationModal(title=f"Declining: {user.display_name}")
-        modal.set_action("dec")
-        modal.add_item(discord.ui.InputText(label=f"Reason: "))
-        await interaction.response.send_modal(modal)
+            user = await bot.get_or_fetch_user(user_id)
+            modal = ApplicationModal(title=f"Declining: {user.display_name}")
+            modal.set_action("dec")
+            modal.add_item(discord.ui.InputText(label=f"Reason: "))
+            await interaction.response.send_modal(modal)
+        else:
+            await interaction.response.send_message("You need Administrator permissions or reviewer role to do this.", ephemeral=True)
 
 
 # Modal functioning as a callback for Accepting/Declining application
