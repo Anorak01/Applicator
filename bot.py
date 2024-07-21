@@ -250,6 +250,16 @@ async def response_channel(ctx):
         emb.set_footer(text="Made by @anorak01", icon_url=owner_icon_url)
         await ctx.response.send_message(embed=emb , ephemeral= True)
 
+@application.command()
+async def set_editor_role(ctx):
+    view = SelectEditorRoleView()
+    await ctx.response.send_message(view=view, ephemeral=True)
+
+@application.command()
+async def set_reviewer_role(ctx):
+    view = SelectReviewerRoleView()
+    await ctx.response.send_message(view=view, ephemeral=True)
+
 bot.add_application_command(application) # add application group commands
 
 
@@ -261,6 +271,25 @@ def get_questions_embed(guild_id, application) -> discord.Embed:
     embed.set_footer(text="Made by @anorak01", icon_url=owner_icon_url)
     return embed
 
+class SelectEditorRoleView(discord.ui.View):
+    @discord.ui.select(
+        select_type=discord.ComponentType.role_select,
+        max_values=1
+    )
+    async def select_callback(self, select, interaction: discord.Interaction):
+        self.disable_all_items()
+        GuildAppDB.set_editor_role(str(interaction.guild.id), str(select.values[0].id)) # select.values[0].id is the id of selected role
+        await interaction.response.edit_message(content=f"You have selected {select.values[0].mention} as the editor role.\nUsers with this role will have access to the application creation, deletion, editor and actions.", view=None)
+
+class SelectReviewerRoleView(discord.ui.View):
+    @discord.ui.select(
+        select_type=discord.ComponentType.role_select,
+        max_values=1
+    )
+    async def select_callback(self, select, interaction: discord.Interaction):
+        self.disable_all_items()
+        GuildAppDB.set_reviewer_role(str(interaction.guild.id), str(select.values[0].id)) # select.values[0].id is the id of selected role
+        await interaction.response.edit_message(content=f"You have selected {select.values[0].mention} as the reviewer role.\nUsers with this role will be able to review applications and accept or reject them.", view=None)
 
 class SelectApplicationStartButton(discord.ui.Select):
     async def callback(self, interaction: discord.Interaction):
@@ -278,19 +307,6 @@ class SelectApplicationStartButton(discord.ui.Select):
             return
         await interaction.response.edit_message(embed=None, content="Application button created", view=None)
         StartButtonDB.add_start_msg(str(message.id), str(self.values[0]), str(interaction.guild.id))
-
-
-class SelectResponseChannelView(discord.ui.View):
-    @discord.ui.select(
-        select_type=discord.ComponentType.channel_select,
-        channel_types=[discord.ChannelType.text],
-        max_values=1
-    )
-    async def select_callback(self, select, interaction: discord.Interaction):
-        self.disable_all_items()
-        GuildAppDB.set_response_channel(interaction.guild.id, )
-        await interaction.response.edit_message(content=f"Selected channel: {select.values[0].mention}", view=None)
-
 
 class SelectApplicationOptionsEditor(discord.ui.Select):
     async def callback(self, interaction: discord.Interaction):
