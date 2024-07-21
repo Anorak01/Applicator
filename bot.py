@@ -19,6 +19,7 @@ from action import Action, ActionInteraction, actions
 
 usable_actions = actions
 
+#global owner_icon_url
 
 load_dotenv()
 
@@ -34,6 +35,10 @@ async def on_ready():
     bot.add_view(ApplicationStartButtonView())
     activity = discord.Activity(name=f"{len(bot.guilds)} guilds", type=discord.ActivityType.listening)
     await bot.change_presence(activity=activity, status = discord.Status.online)
+    app_info = await bot.application_info()
+
+    global owner_icon_url  # I don't like this either, trust me
+    owner_icon_url = app_info.owner.avatar.url
 
     print("Started guild sync")
     new_guild_count = 0
@@ -129,7 +134,7 @@ async def invite(ctx):
     invite_button = discord.ui.Button(label="Invite", style=discord.ButtonStyle.link, url=INVITE_LINK)
     view.add_item(invite_button)
     embed = discord.Embed(title="Invite Me", color=0x70ff50, description="If you like the bot and want to invite it to other servers, click the button below")
-    embed.set_footer(text="Made by @anorak01", icon_url="https://cdn.discordapp.com/avatars/269164865480949760/a1af9962da20d5ddaa136043cf45d015?size=1024")
+    embed.set_footer(text="Made by @anorak01", icon_url=owner_icon_url)
     try:
         await ctx.response.send_message(embed=embed, view=view)
     except discord.HTTPException as e:
@@ -142,7 +147,7 @@ async def support(ctx):
     invite_button = discord.ui.Button(label="Support server", style=discord.ButtonStyle.link, url=SUPPORT_LINK)
     view.add_item(invite_button)
     embed = discord.Embed(title="Support", color=0x70ff50, description="If you're having issues with the bot, you can join my support server with the button below")
-    embed.set_footer(text="Made by @anorak01", icon_url="https://cdn.discordapp.com/avatars/269164865480949760/a1af9962da20d5ddaa136043cf45d015?size=1024")
+    embed.set_footer(text="Made by @anorak01", icon_url=owner_icon_url)
     try:
         await ctx.response.send_message(embed=embed, view=view)
     except discord.HTTPException as e:
@@ -155,7 +160,7 @@ async def review(ctx):
     invite_button = discord.ui.Button(label="Review", style=discord.ButtonStyle.link, url="https://top.gg/bot/1143622923136024767#reviews")
     view.add_item(invite_button)
     embed = discord.Embed(title="Review", color=0x70ff50, description="If you like the bot, please consider leaving a review and upvote my bot, it will really help a lot!")
-    embed.set_footer(text="Made by @anorak01", icon_url="https://cdn.discordapp.com/avatars/269164865480949760/a1af9962da20d5ddaa136043cf45d015?size=1024")
+    embed.set_footer(text="Made by @anorak01", icon_url=owner_icon_url)
     await ctx.response.send_message(embed=embed, view=view)
 
 application = discord.SlashCommandGroup("application", "The main command to manage applications")
@@ -188,9 +193,10 @@ async def remove(ctx, application):
 async def list(ctx):
     applications = GuildAppDB.get_applications(str(ctx.guild.id))
     embed = discord.Embed(title="**List of applications**")
-    embed.set_footer(text="Made by @anorak01", icon_url="https://cdn.discordapp.com/avatars/269164865480949760/a1af9962da20d5ddaa136043cf45d015?size=1024")
+    embed.set_footer(text="Made by @anorak01", icon_url=owner_icon_url)
     if len(applications) == 0:
         embed.title="You haven't created any applications yet."
+        embed.description="Create one using the `/application create` command"
     else:
         for i, app in enumerate(applications):
             embed.add_field(value=f"**{i+1}. {app}**", name="", inline=False)
@@ -198,33 +204,51 @@ async def list(ctx):
 
 @commands.has_permissions(administrator=True)
 @application.command(description="Opens editor for selected application")
-async def editor(ctx):
+async def editor(ctx: discord.ApplicationContext):
     view = discord.ui.View()
     options = SelectApplicationOptionsEditor(max_values=1, placeholder="Select application")
-    for i in GuildAppDB.get_applications(str(ctx.guild.id)):
-        options.add_option(label=i, value=i)
-    view.add_item(options)
-    await ctx.response.send_message(view=view, ephemeral=True)
+    applications = GuildAppDB.get_applications(str(ctx.guild.id))
+    if applications:
+        for i in applications:
+            options.add_option(label=i, value=i)
+        view.add_item(options)
+        await ctx.response.send_message(view=view, ephemeral=True)
+    else:
+        emb = discord.Embed(title="You haven't created any applications yet.", description="Create one using the `/application create` command")
+        emb.set_footer(text="Made by @anorak01", icon_url=owner_icon_url)
+        await ctx.response.send_message(embed=emb , ephemeral= True)
 
 @commands.has_permissions(administrator=True)
 @application.command(description="Opens Actions™ editor")
 async def actions(ctx):
     view = discord.ui.View()
     options = SelectActionOptionsEditor(max_values=1, placeholder="Select application")
-    for i in GuildAppDB.get_applications(str(ctx.guild.id)):
-        options.add_option(label=i, value=i)
-    view.add_item(options)
-    await ctx.response.send_message(view=view, ephemeral=True)
+    application  = GuildAppDB.get_applications(str(ctx.guild.id))
+    if application:
+        for i in GuildAppDB.get_applications(str(ctx.guild.id)):
+            options.add_option(label=i, value=i)
+        view.add_item(options)
+        await ctx.response.send_message(view=view, ephemeral=True)
+    else:
+        emb = discord.Embed(title="You haven't created any applications yet.", description="Create one using the `/application create` command")
+        emb.set_footer(text="Made by @anorak01", icon_url=owner_icon_url)
+        await ctx.response.send_message(embed=emb , ephemeral= True)
 
 @commands.has_permissions(administrator=True)
 @application.command(description="Select response channel for application")
 async def response_channel(ctx):
     view = discord.ui.View()
     options = SelectApplicationOptionsRespChannel(max_values=1, placeholder="Select application")
-    for i in GuildAppDB.get_applications(str(ctx.guild.id)):
-        options.add_option(label=i, value=i)
-    view.add_item(options)
-    await ctx.response.send_message(view=view, ephemeral=True)
+    applications = GuildAppDB.get_applications(str(ctx.guild.id))
+    if applications:
+        for i in GuildAppDB.get_applications(str(ctx.guild.id)):
+            options.add_option(label=i, value=i)
+        view.add_item(options)
+        await ctx.response.send_message(view=view, ephemeral=True)
+    else:
+        emb = discord.Embed(title="You haven't created any applications yet.", description="Create one using the `/application create` command")
+        emb.set_footer(text="Made by @anorak01", icon_url=owner_icon_url)
+        await ctx.response.send_message(embed=emb , ephemeral= True)
 
 bot.add_application_command(application) # add application group commands
 
@@ -234,7 +258,7 @@ def get_questions_embed(guild_id, application) -> discord.Embed:
     questions, length = GuildAppDB.get_questions(str(guild_id), application)
     for i, que in enumerate(questions):
         embed.add_field(value=f"**{i+1}. {que}**", name="", inline=False)
-    embed.set_footer(text="Made by @anorak01", icon_url="https://cdn.discordapp.com/avatars/269164865480949760/a1af9962da20d5ddaa136043cf45d015?size=1024")
+    embed.set_footer(text="Made by @anorak01", icon_url=owner_icon_url)
     return embed
 
 
@@ -244,7 +268,7 @@ class SelectApplicationStartButton(discord.ui.Select):
 
         embed = discord.Embed(title="**Start your application!**")
         embed.add_field(name=f"Click the button below to start your application for: {self.values[0]}", value="", inline=False)
-        embed.set_footer(text="Made by @anorak01", icon_url="https://cdn.discordapp.com/avatars/269164865480949760/a1af9962da20d5ddaa136043cf45d015?size=1024")
+        embed.set_footer(text="Made by @anorak01", icon_url=owner_icon_url)
         appStartView = ApplicationStartButtonView()
 
         try:
@@ -468,7 +492,7 @@ def get_actions_embed(guild_id, application, action_type: ActionInteraction) -> 
             embed.add_field(value=f"**{i+1}. {que['display_type']}: {role}**", name="", inline=False)
         else:
             embed.add_field(value=f"**{i+1}. {que['display_type']}**", name="", inline=False)
-    embed.set_footer(text="Made by @anorak01", icon_url="https://cdn.discordapp.com/avatars/269164865480949760/a1af9962da20d5ddaa136043cf45d015?size=1024")
+    embed.set_footer(text="Made by @anorak01", icon_url=owner_icon_url)
     return embed
 
 class ActionAcceptEditorView(discord.ui.View):
@@ -675,7 +699,7 @@ class ApplicationStartButtonView(discord.ui.View):
         embedd = discord.Embed(title=f'{interaction.guild.name} application: {app_name}', description="Hey! Your application has started. You have 300 seconds to complete it.")
         embedd.add_field(value="Please note that answers longer than 1000 characters will be shortened", name="", inline=False)
         embedd.add_field(value=f'You can cancel the application by answering "cancel" to any of the questions', name="", inline=False)
-        embedd.set_footer(text="Made by @anorak01", icon_url="https://cdn.discordapp.com/avatars/269164865480949760/a1af9962da20d5ddaa136043cf45d015?size=1024")
+        embedd.set_footer(text="Made by @anorak01", icon_url=owner_icon_url)
 
         try:
             first_mes = await user.send(embed=embedd)
@@ -737,7 +761,7 @@ class ApplicationStartButtonView(discord.ui.View):
                         """)
 
         embed_controls.set_thumbnail(url=interaction.user.display_avatar.url)
-        embed_controls.set_footer(text="Made by @anorak01", icon_url="https://cdn.discordapp.com/avatars/269164865480949760/a1af9962da20d5ddaa136043cf45d015?size=1024")
+        embed_controls.set_footer(text="Made by @anorak01", icon_url=owner_icon_url)
 
         question_embeds.append(embed_controls)
         #for embe in question_embeds:
@@ -874,7 +898,9 @@ class ApplicationModal(discord.ui.Modal):
             await interaction.followup.edit_message(message_id = interaction.message.id, view = view)
 
 
-
-
+try:
+    assert(type(TOKEN) == str)
+except AssertionError:
+    print("you need to set up a token")
 # end
 bot.run(TOKEN)
