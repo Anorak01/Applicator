@@ -108,6 +108,7 @@ async def help(ctx):
 
 @commands.has_permissions(administrator=True)
 @bot.slash_command(description = "Command used to set up the application prompt")
+@is_editor_or_admin()
 async def start_button(ctx):
     view = discord.ui.View()
     options = SelectApplicationStartButton(max_values=1, placeholder="Select application")
@@ -123,7 +124,7 @@ async def start_button(ctx):
 @start_button.error
 async def on_application_command_error(ctx, error):
     if isinstance(error, commands.MissingPermissions):
-        await ctx.respond("You need Administrator permissions to use this command", ephemeral=True)
+        await ctx.respond("You need Administrator permissions or reviewer role to use this command", ephemeral=True)
     else:
         raise error
 
@@ -165,8 +166,8 @@ async def review(ctx):
 
 application = discord.SlashCommandGroup("application", "The main command to manage applications")
 
-@commands.has_permissions(administrator=True)
 @application.command(description="Create application")
+@is_editor_or_admin()
 async def create(ctx, application):
     if len(application) < 40:
         result = GuildAppDB.add_application_entry(str(ctx.guild.id), application)
@@ -179,8 +180,8 @@ async def create(ctx, application):
     else:
         await ctx.response.send_message(f"please choose a different name", ephemeral=True)
 
-@commands.has_permissions(administrator=True)
 @application.command(description="Remove application")
+@is_editor_or_admin()
 async def remove(ctx, application):
     result = GuildAppDB.remove_application_entry(str(ctx.guild.id), application)
     if result == "success":
@@ -188,8 +189,8 @@ async def remove(ctx, application):
     else:
         await ctx.response.send_message(f"Application {application} not found", ephemeral=True)
 
-@commands.has_permissions(administrator=True)
 @application.command(description="List all applications")
+@is_editor_or_admin()
 async def list(ctx):
     applications = GuildAppDB.get_applications(str(ctx.guild.id))
     embed = discord.Embed(title="**List of applications**")
@@ -202,8 +203,8 @@ async def list(ctx):
             embed.add_field(value=f"**{i+1}. {app}**", name="", inline=False)
     await ctx.response.send_message(embed=embed, ephemeral=True)
 
-@commands.has_permissions(administrator=True)
 @application.command(description="Opens editor for selected application")
+@is_editor_or_admin()
 async def editor(ctx: discord.ApplicationContext):
     view = discord.ui.View()
     options = SelectApplicationOptionsEditor(max_values=1, placeholder="Select application")
@@ -218,8 +219,8 @@ async def editor(ctx: discord.ApplicationContext):
         emb.set_footer(text="Made by @anorak01", icon_url=owner_icon_url)
         await ctx.response.send_message(embed=emb , ephemeral= True)
 
-@commands.has_permissions(administrator=True)
 @application.command(description="Opens Actions™ editor")
+@is_editor_or_admin()
 async def actions(ctx):
     view = discord.ui.View()
     options = SelectActionOptionsEditor(max_values=1, placeholder="Select application")
@@ -234,8 +235,8 @@ async def actions(ctx):
         emb.set_footer(text="Made by @anorak01", icon_url=owner_icon_url)
         await ctx.response.send_message(embed=emb , ephemeral= True)
 
-@commands.has_permissions(administrator=True)
 @application.command(description="Select response channel for application")
+@is_editor_or_admin()
 async def response_channel(ctx):
     view = discord.ui.View()
     options = SelectApplicationOptionsRespChannel(max_values=1, placeholder="Select application")
