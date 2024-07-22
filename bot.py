@@ -71,8 +71,17 @@ async def on_application_command_error(ctx: discord.ApplicationContext, error: d
     if isinstance(error, commands.MissingPermissions):
         await ctx.respond("You need Administrator permissions to use this command", ephemeral=True)
         print(f"{ctx.guild.name} {ctx.user.display_name} needs admin")
+    if isinstance(error, discord.errors.CheckFailure):
+        print(error.message == "The check functions for the command create failed")
+    if isinstance(error, PermissionNeeded):
+        await ctx.respond(f"You need Administrator permissions or the `{error.permission.capitalize()}` role to do this", ephemeral=True)
     else:
         raise error  # Error go brrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrr
+
+class PermissionNeeded(commands.CommandError):
+    def __init__(self, permission, *args, **kwargs):
+        self.permission = permission
+        super().__init__(*args, **kwargs)
 
 def is_editor_or_admin():
     async def predicate(ctx):
@@ -80,7 +89,7 @@ def is_editor_or_admin():
         user_role = ctx.user.get_role(editor_role_id)
         if ctx.user.guild_permissions.administrator: return True
         elif user_role != None: return True
-        else: return False
+        else: raise PermissionNeeded("editor")
 
     return commands.check(predicate)
 
@@ -90,7 +99,7 @@ def is_reviewer_or_admin():
         user_role = ctx.user.get_role(reviewer_role_id)
         if ctx.user.guild_permissions.administrator: return True
         elif user_role != None: return True
-        else: return False
+        else: raise PermissionNeeded("reviewer")
 
     return commands.check(predicate)
 
@@ -99,7 +108,7 @@ def is_reviewer_or_admin_func(ctx: discord.Interaction):
     user_role = ctx.user.get_role(reviewer_role_id)
     if ctx.user.guild_permissions.administrator: return True
     elif user_role != None: return True
-    else: return False
+    else: raise PermissionNeeded("reviewer")
 
 @bot.slash_command(description = "A help command to get you started")
 async def help(ctx):
@@ -821,17 +830,21 @@ class ApplicationButtonsView(discord.ui.View):
         custom_id=f"persistent:accept",
     )
     async def accept(self, button: discord.ui.Button, interaction: discord.Interaction):
-        if is_reviewer_or_admin_func(interaction):
-            msg_id = str(interaction.message.id)
+        try:
+            is_reviewer_or_admin_func(interaction)
+        except PermissionNeeded as error:
+            await interaction.response.send_message(f"You need Administrator permissions or the `{error.permission.capitalize()}` role to do this", ephemeral=True)
+            return
+        msg_id = str(interaction.message.id)
 
-            user_id, guild_id, app_name = MessageDB.get_application_msg(msg_id)
-            user = await bot.get_or_fetch_user(user_id)
-            modal = ApplicationModal(title=f"Accepting: {user.display_name}")
-            modal.set_action("acc")
-            modal.add_item(discord.ui.InputText(label=f"Reason: "))
-            await interaction.response.send_modal(modal)
-        else:
-            await interaction.response.send_message("You need Administrator permissions or reviewer role to do this.", ephemeral=True)
+        user_id, guild_id, app_name = MessageDB.get_application_msg(msg_id)
+        user = await bot.get_or_fetch_user(user_id)
+        modal = ApplicationModal(title=f"Accepting: {user.display_name}")
+        modal.set_action("acc")
+        modal.add_item(discord.ui.InputText(label=f"Reason: "))
+        await interaction.response.send_modal(modal)
+
+        #await interaction.response.send_message("You need Administrator permissions or reviewer role to do this.", ephemeral=True)
 
     @discord.ui.button(
         label="Decline",
@@ -839,19 +852,20 @@ class ApplicationButtonsView(discord.ui.View):
         custom_id=f"persistent:decline",
     )
     async def decline(self, button: discord.ui.Button, interaction: discord.Interaction):
-        if is_reviewer_or_admin_func(interaction):
-            msg_id = str(interaction.message.id)
+        try:
+            is_reviewer_or_admin_func(interaction)
+        except PermissionNeeded as error:
+            await interaction.response.send_message(f"You need Administrator permissions or the `{error.permission.capitalize()}` role to do this", ephemeral=True)
+            return
+        msg_id = str(interaction.message.id)
 
-            user_id, guild_id, app_name = MessageDB.get_application_msg(msg_id)
+        user_id, guild_id, app_name = MessageDB.get_application_msg(msg_id)
 
-            user = await bot.get_or_fetch_user(user_id)
-            modal = ApplicationModal(title=f"Declining: {user.display_name}")
-            modal.set_action("dec")
-            modal.add_item(discord.ui.InputText(label=f"Reason: "))
-            await interaction.response.send_modal(modal)
-        else:
-            await interaction.response.send_message("You need Administrator permissions or reviewer role to do this.", ephemeral=True)
-
+        user = await bot.get_or_fetch_user(user_id)
+        modal = ApplicationModal(title=f"Declining: {user.display_name}")
+        modal.set_action("dec")
+        modal.add_item(discord.ui.InputText(label=f"Reason: "))
+        await interaction.response.send_modal(modal)
 
 # Modal functioning as a callback for Accepting/Declining application
 class ApplicationModal(discord.ui.Modal):
