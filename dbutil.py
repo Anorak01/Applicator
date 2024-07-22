@@ -69,7 +69,7 @@ class GuildAppDB():
         cur = con.cursor()
         cur.execute("SELECT editor_role_id FROM app_guildapp_db WHERE guild_id=(?)", (guild_id, ))
         role_id = cur.fetchone()
-        if role_id == "" or role_id == None:
+        if role_id[0] == "" or role_id[0] == None:
             return -1 # no valid role to check
         else: return int(role_id[0])
 
@@ -86,7 +86,7 @@ class GuildAppDB():
         cur = con.cursor()
         cur.execute("SELECT reviewer_role_id FROM app_guildapp_db WHERE guild_id=(?)", (guild_id, ))
         role_id = cur.fetchone()
-        if role_id == "" or role_id == None:
+        if role_id[0] == "" or role_id[0] == None:
             return -1 # no valid role to check
         else: return int(role_id[0])
 
