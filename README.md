@@ -2,6 +2,8 @@
 
 My own discord bot for applications. Not only staff, you can make anything! Every application and it's actions are editable using in-discord GUI! So no more annoying websites.
 
+**Now finally with basic permissions!**
+
 ---
 
 Support me on [Ko-fi](https://ko-fi.com/anorak01)
@@ -46,6 +48,8 @@ The bot is based on `/slash` commands, so you can just type `/` in Discord and c
 - `/application response_channel` - set channel where all finished applications get sent
 - `/application editor` - opens editor for selected application
 - `/application actions` - opens editor for Actions™ of application
+- `/application set_editor_role` - sets the editor role, this enables access to working with applications on your server
+- `/application set_reviewer_role` - sets the reviewer role, this enables access to accepting and declining applications from users
 
 ---
 ### Installation
