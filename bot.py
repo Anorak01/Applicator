@@ -185,6 +185,8 @@ async def create(ctx, application):
             options.set_app_name(application)
             view.add_item(options)
             await ctx.response.send_message(f"Successfully created application: {application}\n\nPlease set a response channel:", ephemeral=True, view=view) # create a new application, modal with name ask
+        else:
+            await ctx.response.send_message(f"Application {application} already exists", ephemeral=True)
     else:
         await ctx.response.send_message(f"please choose a different name", ephemeral=True)
 
