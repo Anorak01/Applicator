@@ -103,7 +103,7 @@ def is_reviewer_or_admin_func(ctx: discord.Interaction):
 
 @bot.slash_command(description = "A help command to get you started")
 async def help(ctx):
-    embed = discord.Embed(title="Applicator Help", description="Applicator is an open-source Discord application bot that's easy to setup directly in Discord. \nEvery command is usable with /slash. \nPlease note that you need Administrator privileges on the server to manipulate applications.")
+    embed = discord.Embed(title="Applicator Help", description="Applicator is an open-source Discord application bot that's easy to setup directly in Discord. \nEvery command is usable with /slash. \nWith the new permission system, you need editor or reviewer role to work with the bot.\nBeing Administrator overrides this requirement.")
     embed.add_field(name="```/application create [name]```", value="Creates a new application", inline=False)
     embed.add_field(name="```/application response_channel```", value="Sets the response channel for application. **Important**", inline=False)
     embed.add_field(name="```/application remove [name]```", value="Removes specified application", inline=False)
