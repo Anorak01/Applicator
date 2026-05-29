@@ -1,16 +1,17 @@
-from typing import Any, TypeVar, NewType
 from enum import Enum
+from typing import Any, NewType, TypeVar
+
 import discord
 
-actions = {
-    "Add Role": "add_role"
-            }
+action_map: dict[str, str] = {"Add Role": "add_role"}
+
 
 class ActionInteraction(Enum):
     ACCEPT = "Accept"
     DECLINE = "Decline"
 
-class Action():
+
+class Action:
     def __init__(self, action: ActionInteraction):
         self.set_type = None
         self.app_result = action
@@ -24,8 +25,4 @@ class Action():
 
     def get_data(self):
         if self.set_type is not None:
-            return {
-                "type": self.set_type
-            }
-
-
+            return {"type": self.set_type}

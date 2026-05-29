@@ -1,3 +1,6 @@
+# pyright: reportOptionalMemberAccess=false
+# pyright: reportAttributeAccessIssue=false
+# pyright: reportOptionalSubscript=false
 # db - msg_id, user_id, guild_id
 
 import asyncio
@@ -13,10 +16,10 @@ from discord.ui import InputText, Modal
 from discord.utils import get
 from dotenv import load_dotenv
 
-from action import Action, ActionInteraction, actions
+from action import Action, ActionInteraction, action_map
 from dbutil import GuildAppDB, MessageDB, StartButtonDB
 
-usable_actions = actions
+usable_actions: dict[str, str] = action_map
 
 # global owner_icon_url
 
@@ -83,9 +86,9 @@ async def on_application_command_error(
             "You need Administrator permissions to use this command", ephemeral=True
         )
         print(f"{ctx.guild.name} {ctx.user.display_name} needs admin")
-    if isinstance(error, discord.errors.CheckFailure):
+    elif isinstance(error, discord.errors.CheckFailure):
         print(error.message == "The check functions for the command create failed")
-    if isinstance(error, PermissionNeeded):
+    elif isinstance(error, PermissionNeeded):
         await ctx.respond(
             f"You need Administrator permissions or the `{error.permission.capitalize()}` role to do this",
             ephemeral=True,
@@ -212,7 +215,7 @@ async def start_button(ctx):
 
 
 @start_button.error
-async def on_application_command_error(ctx, error):
+async def on_start_button_error(ctx, error):
     if isinstance(error, commands.MissingPermissions):
         await ctx.respond(
             "You need Administrator permissions or reviewer role to use this command",
@@ -622,9 +625,10 @@ class AddQuestionModal(discord.ui.Modal):
 
     async def callback(self, interaction: discord.Interaction):
         question = self.children[0].value
+        assert question is not None
         if len(question) > 250:
             await interaction.response.send_message(
-                f"Question too long, max 100 characters", ephemeral=True
+                "Question too long, max 250 characters", ephemeral=True
             )
             return
         GuildAppDB.add_question(str(interaction.guild.id), self.app_name, question)
@@ -668,6 +672,7 @@ class EditQuestionModal(discord.ui.Modal):
 
     async def callback(self, interaction: discord.Interaction):
         question = self.children[0].value
+        assert question is not None
         GuildAppDB.edit_question(
             str(interaction.guild.id), self.app_name, self.question_index, question
         )
@@ -690,7 +695,7 @@ class MoveQuestionSelect(discord.ui.Select):
         questions, length = GuildAppDB.get_questions(
             str(interaction.guild.id), self.app_name
         )
-        for i in range(length):
+        for i in range(int(length)):
             options.add_option(label=str(i + 1), value=str(i + 1))
         view.add_item(options)
         await interaction.response.edit_message(view=view)
@@ -724,6 +729,8 @@ def get_actions_embed(
         description=f"Actions happening on: {action_type.value}",
     )
     actions = GuildAppDB.get_actions(str(guild_id), application, action_type)
+    if isinstance(actions, str):
+        return embed
     for i, que in enumerate(actions):
         if que["action_type"] == "add_role":
             role = bot.get_guild(int(guild_id)).get_role(que["data"]["role_id"]).name
@@ -783,6 +790,9 @@ class ActionAcceptEditorView(discord.ui.View):
             self.application_name,
             action_type=ActionInteraction.ACCEPT,
         )
+        if isinstance(actions, str):
+            await interaction.response.edit_message(view=view)
+            return
         options.set_action_type(ActionInteraction.ACCEPT)
         if len(actions) == 0:
             await interaction.response.edit_message(view=view)
@@ -844,6 +854,9 @@ class ActionDeclineEditorView(discord.ui.View):
             self.application_name,
             action_type=ActionInteraction.DECLINE,
         )
+        if isinstance(actions, str):
+            await interaction.response.edit_message(view=view)
+            return
         options.set_action_type(ActionInteraction.DECLINE)
         if len(actions) == 0:
             await interaction.response.edit_message(view=view)
@@ -901,6 +914,8 @@ class SelectRoleToAdd(discord.ui.Select):
             "display_type": "Add Role",
             "data": {"role_id": role.id},
         }
+        editor = None
+        embed = None
         GuildAppDB.add_action(str(interaction.guild.id), self.app_name, action)
         if self.action_type == ActionInteraction.ACCEPT:
             editor = ActionAcceptEditorView(str(interaction.guild.id), self.app_name)
@@ -924,6 +939,8 @@ class RemoveActionSelect(discord.ui.Select):
 
     async def callback(self, interaction: discord.Interaction):
         self.disabled = True
+        editor = None
+        embed = None
         GuildAppDB.remove_action(
             str(interaction.guild.id),
             self.app_name,
@@ -962,6 +979,8 @@ class SelectActionType(discord.ui.Select):
 
     async def callback(self, interaction: discord.Interaction):
         self.disabled = True
+        editor = None
+        embed = None
         if self.values[0] == "accept":
             editor = ActionAcceptEditorView(str(interaction.guild.id), self.app_name)
             embed = get_actions_embed(
@@ -988,7 +1007,7 @@ class ApplicationStartButtonView(discord.ui.View):
     async def start_app(
         self, button: discord.ui.Button, interaction: discord.Interaction
     ):
-        app_name, guild_id = StartButtonDB.get_start_msg(interaction.message.id)
+        app_name, guild_id = StartButtonDB.get_start_msg(str(interaction.message.id))
 
         questions, max_questions = GuildAppDB.get_questions(guild_id, app_name)
         if questions == "error on get questions: application not found":
@@ -1037,7 +1056,7 @@ class ApplicationStartButtonView(discord.ui.View):
 
         application = {"userId": interaction.user.id}
 
-        for i in range(0, max_questions):
+        for i in range(0, int(max_questions)):
             try:
                 embed = discord.Embed(
                     title=f"Question [{i + 1}/{max_questions}]",
@@ -1060,6 +1079,9 @@ class ApplicationStartButtonView(discord.ui.View):
                 )
                 return
 
+        assert response_channel is not None, (
+            "Response channel not set for this application"
+        )
         channel = bot.get_channel(int(response_channel))
 
         app_time = time.time() - time_now
@@ -1075,7 +1097,7 @@ class ApplicationStartButtonView(discord.ui.View):
         embee = discord.Embed(
             title=f"**{interaction.user.display_name}**'s application for {app_name}"
         )  # create first embed
-        for i in range(0, max_questions):
+        for i in range(0, int(max_questions)):
             if embed_text_len > 5000:  # if the first embed is full, create new one
                 question_embeds.append(embee)
                 embee = discord.Embed()
@@ -1083,9 +1105,13 @@ class ApplicationStartButtonView(discord.ui.View):
                 send_as_file = True
 
             embee.add_field(
-                name=f"{questions[i]}", value=application[f"question{i}"], inline=False
+                name=f"{questions[i]}",
+                value=str(application[f"question{i}"]),
+                inline=False,
             )
-            embed_text_len += len(questions[i]) + len(application[f"question{i}"])
+            embed_text_len += len(str(questions[i])) + len(
+                str(application[f"question{i}"])
+            )
             text_representation += (
                 questions[i] + ":\n" + application[f"question{i}"] + "\n\n"
             )
@@ -1115,7 +1141,7 @@ class ApplicationStartButtonView(discord.ui.View):
             from io import StringIO
 
             text_file = StringIO(text_representation)
-            text_file = discord.File(text_file, filename="application.txt")
+            text_file = discord.File(text_file, filename="application.txt")  # type: ignore
             last_msg = await channel.send(
                 content="Application too long to send as message. Sent as file",
                 view=appView,
@@ -1127,7 +1153,10 @@ class ApplicationStartButtonView(discord.ui.View):
             last_msg = await channel.send(embeds=question_embeds, view=appView)
 
         MessageDB.add_application_msg(
-            last_msg.id, interaction.user.id, interaction.guild.id, app_name
+            str(last_msg.id),
+            str(interaction.user.id),
+            str(interaction.guild.id),
+            app_name,
         )
 
         await user.send("Thank you for applying!")
@@ -1155,7 +1184,7 @@ class ApplicationButtonsView(discord.ui.View):
         msg_id = str(interaction.message.id)
 
         user_id, guild_id, app_name = MessageDB.get_application_msg(msg_id)
-        user = await bot.get_or_fetch_user(user_id)
+        user = await bot.get_or_fetch_user(int(user_id))
         modal = ApplicationModal(title=f"Accepting: {user.display_name}")
         modal.set_action("acc")
         modal.add_item(discord.ui.InputText(label=f"Reason: "))
@@ -1183,7 +1212,7 @@ class ApplicationButtonsView(discord.ui.View):
 
         user_id, guild_id, app_name = MessageDB.get_application_msg(msg_id)
 
-        user = await bot.get_or_fetch_user(user_id)
+        user = await bot.get_or_fetch_user(int(user_id))
         modal = ApplicationModal(title=f"Declining: {user.display_name}")
         modal.set_action("dec")
         modal.add_item(discord.ui.InputText(label=f"Reason: "))
@@ -1200,7 +1229,7 @@ class ApplicationModal(discord.ui.Modal):
         msg_id = str(interaction.message.id)
         user_id, guild_id, app_name = MessageDB.get_application_msg(msg_id)
         if self.action == "acc":
-            user = await bot.get_or_fetch_user(user_id)
+            user = await bot.get_or_fetch_user(int(user_id))
             user = await user.create_dm()
             try:
                 await user.send(f"Your application has been accepted!")
@@ -1218,9 +1247,15 @@ class ApplicationModal(discord.ui.Modal):
             actions = GuildAppDB.get_actions(
                 str(guild_id), app_name, ActionInteraction.ACCEPT
             )
+            if isinstance(actions, str):
+                await interaction.response.send_message(
+                    content="Failed to process actions", ephemeral=True
+                )
+                return
             for i in actions:
                 if i["action_type"] == "add_role":
                     role = interaction.message.guild.get_role(int(i["data"]["role_id"]))
+                    assert role is not None
                     try:
                         user = await interaction.message.guild.fetch_member(
                             int(user_id)
@@ -1247,6 +1282,7 @@ class ApplicationModal(discord.ui.Modal):
             await interaction.followup.edit_message(
                 message_id=interaction.message.id, embeds=[emb, embed]
             )
+            assert interaction.message is not None
             view = discord.ui.View.from_message(interaction.message)
             view.disable_all_items()
             await interaction.followup.edit_message(
@@ -1254,7 +1290,7 @@ class ApplicationModal(discord.ui.Modal):
             )
 
         if self.action == "dec":
-            user = await bot.get_or_fetch_user(user_id)
+            user = await bot.get_or_fetch_user(int(user_id))
             user = await user.create_dm()
             try:
                 await user.send(f"Your application has been declined.")
@@ -1272,10 +1308,16 @@ class ApplicationModal(discord.ui.Modal):
             actions = GuildAppDB.get_actions(
                 str(guild_id), app_name, ActionInteraction.DECLINE
             )
+            if isinstance(actions, str):
+                await interaction.response.send_message(
+                    content="Failed to process actions", ephemeral=True
+                )
+                return
             for i in actions:
                 if i["action_type"] == "add_role":
                     role = interaction.message.guild.get_role(int(i["data"]["role_id"]))
                     user = interaction.message.guild.get_member(int(user_id))
+                    assert role is not None
                     await user.add_roles(role)
                 else:
                     print("unknown action")
@@ -1291,6 +1333,7 @@ class ApplicationModal(discord.ui.Modal):
             await interaction.followup.edit_message(
                 message_id=interaction.message.id, embeds=[emb, embed]
             )
+            assert interaction.message is not None
             view = discord.ui.View.from_message(interaction.message)
             view.disable_all_items()
             await interaction.followup.edit_message(

@@ -2,6 +2,7 @@ import json
 import os
 import pickle
 import sqlite3
+from typing import Any
 
 from action import Action, ActionInteraction
 
@@ -213,7 +214,7 @@ class GuildAppDB:
             return "error on set response channel: application not found"
 
     @classmethod
-    def get_response_channel(cls, guild_id: str, application_name: str) -> str:
+    def get_response_channel(cls, guild_id: str, application_name: str) -> str | None:
         cur = _con.cursor()
         cur.execute(
             "SELECT applications_blob FROM app_guildapp_db WHERE guild_id=(?)",
@@ -374,7 +375,7 @@ class GuildAppDB:
     @classmethod
     def get_actions(
         cls, guild_id: str, application_name: str, action_type: ActionInteraction
-    ):
+    ) -> list[dict[str, Any]] | str:
         cur = _con.cursor()
         cur.execute(
             "SELECT applications_blob FROM app_guildapp_db WHERE guild_id=(?)",
