@@ -109,7 +109,9 @@ class GuildAppDB:
         application_blob = pickle.dumps(applications)
         data = guild_id, guild_name, application_blob, "", ""
         cur = _con.cursor()
-        cur.execute("INSERT INTO app_guildapp_db VALUES (?, ?, ?, ?, ?)", data)
+        cur.execute(
+            "INSERT OR IGNORE INTO app_guildapp_db VALUES (?, ?, ?, ?, ?)", data
+        )
         _con.commit()
 
     @classmethod

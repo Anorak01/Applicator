@@ -1078,6 +1078,8 @@ class ApplicationStartButtonView(discord.ui.View):
                     content="As you haven't replied in 300 seconds, your application has been cancelled"
                 )
                 return
+            except discord.Forbidden:
+                return
 
         assert response_channel is not None, (
             "Response channel not set for this application"
